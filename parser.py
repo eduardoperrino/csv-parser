@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import sys
 import csv
 import logging
@@ -7,6 +5,7 @@ import sqlite3
 import os
 import datetime
 import calendar
+from sys import exit
 from collections import namedtuple
 
 logging.basicConfig(level=logging.DEBUG, format='%(levelname)s - %(message)s')
@@ -24,9 +23,11 @@ def build_table_name():
 
 def parse(file):
     if not os.path.isfile(file):
-        return FinalReport(processed_rows=0, inserted_rows=0, error="No such file %s" % file)
+        return FinalReport(processed_rows=0, inserted_rows=0,
+            error="No such file `%s`" % file)
     with open(file) as csv_file:
         con = sqlite3.connect(":memory:")
+        con.text_factory = lambda x: unicode(x, "utf-8", "ignore")
         cur = con.cursor()
         dialect = csv.Sniffer().sniff(csv_file.read(30))
         csv_file.seek(0)
@@ -34,7 +35,11 @@ def parse(file):
         headers = next(csv_reader, None)
         table_name = build_table_name()
         creational_statement = "CREATE TABLE %s (%s);" % (table_name, ','.join(headers))
-        cur.execute(creational_statement)
+        try:
+            cur.execute(creational_statement)
+        except Exception as err:
+            return FinalReport(processed_rows=0, inserted_rows=0,
+                error="Error creating DB table `%s`" % err)
         data = []
         processed_rows = 0
         for row in csv_reader:
@@ -42,10 +47,15 @@ def parse(file):
                 data.append(row)
             processed_rows += 1
         insert_statement = "INSERT INTO " + table_name + " VALUES (" + ','.join(['?'] * len(headers)) + ");"
-        cur.executemany(insert_statement, data)
+        try:
+            cur.executemany(insert_statement, data)
+        except Exception as err:
+            return FinalReport(processed_rows=processed_rows, inserted_rows=0,
+                error="Error storing data into DB `%s`" % err)
         con.commit()
         con.close()
-        return FinalReport(processed_rows=processed_rows, inserted_rows=len(data), error=None)
+        return FinalReport(processed_rows=processed_rows,
+            inserted_rows=len(data), error=None)
 
 
 def print_report(final_report):
@@ -53,13 +63,14 @@ def print_report(final_report):
     if final_report.error:
         print "*** Upsss!!! Error processing file"
         print "*** Cause: %s" % final_report.error
-    else:
-        print "*** Rows processed %s" % final_report.processed_rows
-        print "*** Rows Stored %s" % final_report.inserted_rows
+    print "*** Rows processed %s" % final_report.processed_rows
+    print "*** Rows Stored %s" % final_report.inserted_rows
     print "*******************************************************************"
 
 
 def run_parser(args):
+    if len(args) == 1:
+        exit("=== You must indicate a csv to be parsed :-)")
     print_report(parse(args[1]))
 
 
