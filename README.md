@@ -16,7 +16,7 @@ chmod +x build.sh
 ## Running application
 
 ```
-./dist/parser
+./dist/parser users_data.txt
 ```
 
 ## Test application
