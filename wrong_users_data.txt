@@ -1,0 +1,3 @@
+id,name,address,date joined,age,currency
+5,john smith,1132 Anywhere Lane Hoboken NJ,Jan 4,EUR
+2,erica meye�ers,1234 Smith Lane Hoboken NJ,March 2,12,USD
