@@ -4,7 +4,7 @@
 ## Introduction
 This project contains an example for a python command-line application which processes a given csv file and insert its rows into a SQLite database. By default, the application uses the in-memory driver for the database to avoid generated files into your machine disk.
 
-## Prerquisites
+## Prerequisites
 * [Pip](https://pypi.org/project/pip/) installed
 
 ## Build application
